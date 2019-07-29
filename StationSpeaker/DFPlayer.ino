@@ -33,7 +33,12 @@ public:
   static void OnUsbRemoved(uint16_t code) {}
 };
 
-SoftwareSerial dfpSerial(10, 11);
+/**
+ * Seriove rozhrani pro ovladani DF Playeru
+ */
+// SoftwareSerial dfpSerial(10, 11);
+
+SoftwareSerial dfpSerial(A2, A1);
 
 DFMiniMp3<SoftwareSerial, Mp3Notify> mp3(dfpSerial);
 
@@ -64,6 +69,13 @@ void dfPlaySound(int trackNo) {
   lastFinished = -1;
 }
 
+/**
+ * Neumi zjistit zda skladba chybi.
+ */
+boolean dfpCheckTrackMissing(int trackId) {
+  return false;
+}
+
 void dfpStopSound() {
   mp3.stop();
 }
@@ -72,4 +84,5 @@ void dfSetup() {
   dfpSerial.begin (9600);
   mp3.setVolume(config.volume);
 }
+
 

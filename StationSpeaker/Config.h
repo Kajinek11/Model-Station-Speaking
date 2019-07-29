@@ -49,6 +49,7 @@ struct Config {
 #define _loop dfpLoop
 #define _setup dfSetup
 #define _setVolume dfpSetVolume
+#define _checkTrackMissing dfpCheckTrackMissing
 #endif
 
 const boolean debug = false;

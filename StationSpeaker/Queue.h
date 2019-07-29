@@ -30,16 +30,17 @@ class Queue {
 public:
   Queue();
   void clear();
-  boolean add(int no);
-  int poll();
-  void finished();
-  boolean isEmpty();
-  boolean isAutoMode();
-  void autoPlay(int start);
-  void resetSchedule() { playAt = -1; }
+  boolean add(int no); // prida skladbu na konec fronty. Pri auto rezimu na zacatek fronty
+  int poll(); // vrati cislo dalsi skladby
+  boolean isEmpty();  // true, pokud ve fronte nic neni
+  boolean isClear();  // true, pokud je fronta zcela nepouzita.
+  boolean isAutoMode(); // true, pokud obsahuje sekvenci
+  void autoPlay(int start); // zacne hrat automaticky sekvenci pocinaje cislem
+  void resetSchedule() { playAt = -1; } // zrusi pozdrzeni
   void schedule(long timeAt) { playAt = max(playAt, timeAt); }
   long getSchedule() { return playAt; }
-  void retract();
+  void retract();     // prida zpet prvek naposledy vytazeny z fronty (poll);
+  boolean discardLast(); // odstrani posledni ve fronte
 };
 
 #endif

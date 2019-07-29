@@ -5,6 +5,8 @@
 #include <EEPROM.h>
 
 #include "Config.h"
+
+#include "AbstractPlayer.h"
 #include "LedFeedback.h"
 #include "Queue.h"
 
@@ -162,9 +164,6 @@ int digits = 0;
  */
 long masterQueuePlayTime = -1;
 
-void _stopSound();
-void _playSound(int track);
-
 /**
  * Nastavi pocatecni (zakladni) stav pro ovladaci logiku.
  */
@@ -236,6 +235,11 @@ void stopCurrentSound() {
   _DPRINTLN("Stopping sound");
   ledFeedback.signal(&cancelAck[0]);
   playing = false;
+  if (!master.isEmpty()) {
+    scheduleMaster(millis() + MASTER_QUEUE_PROCESS_DELAY);
+    _DPRINTLN2("Master not empty, suspended until ", masterQueuePlayTime);
+    
+  }
   _stopSound();
 }
 
@@ -313,9 +317,14 @@ void playNextQueue() {
   for (c++; c < MAX_QUEUE_COUNT; c++) {
     Queue& q = queues[c];
     if (!q.isEmpty()) {
-      currentQueue = c;
-      playNextInQueue();
-      return;
+      // Pokusi se zkontrolovat skladbu:
+      int tn = q.poll();
+      q.retract();
+      if (tn > 0 && !_checkTrackMissing(tn)) {
+        currentQueue = c;
+        playNextInQueue();
+        return;
+      }
     }
   }
   if (currentQueue <= 0) {
@@ -324,9 +333,14 @@ void playNextQueue() {
   for (c = 1; c <= currentQueue; c++) {
     Queue& q = queues[c];
     if (!q.isEmpty()) {
-      currentQueue = c;
-      playNextInQueue();
-      return;
+      // Pokusi se zkontrolovat skladbu:
+      int tn = q.poll();
+      q.retract();
+      if (tn > 0 && !_checkTrackMissing(tn)) {
+        currentQueue = c;
+        playNextInQueue();
+        return;
+      }
     }
   }
 }
@@ -360,22 +374,35 @@ void insertInActiveQueue() {
     errorAndClear();
     return;
   }
+  if (trackSelection <= 0 || _checkTrackMissing(trackSelection)) {
+    errorAndClear();
+    return;
+  }
   _DPRINTLN2("Queuing into ", (int)currentQueue);
   Queue& q = queues[currentQueue];
   boolean wasEmpty = q.isEmpty();
+  boolean wasClear = q.isClear();
   if (speakerState == sequenceQueueSelect) {
     if (!wasEmpty) {
       _DPRINTLN("Queue not empty");
       errorAndClear();
       return;
     }
+    q.clear();
     _DPRINTLN2("Autoplay from: ", trackSelection);
     q.autoPlay(trackSelection);
-  } else if (trackSelection <= 0 || !q.add(trackSelection)) {
-    errorAndClear();
-    return;
+  } else {
+    if (wasEmpty) {
+      q.clear();
+    }
+    if (!q.add(trackSelection)) {
+      errorAndClear();
+      return;
+    }
   }
-  if (wasEmpty) {
+  // Neprehravalo se z ni; pokud s z ni prave prehrava, jeste
+  // nema status 'clear'
+  if (wasClear) {
     _DPRINTLN("Play empty queue");
     addQueueToMaster(currentQueue);
   }
@@ -455,6 +482,16 @@ void processInitial(char c) {
       playNextQueue();
       restart();
       break;
+    case 'c':
+      _DPRINTLN2("Clear last from: ", (int)currentQueue);
+      clearQueueItem(currentQueue, false);
+      restart();
+      break;
+    case 'C':
+      _DPRINTLN2("Clear all queue: ", (int)currentQueue);
+      clearQueueItem(currentQueue, true);
+      restart();
+      break;
     case 'K':
       saveEEPROM();
       ledFeedback.signal(&numberAck[0]);
@@ -486,9 +523,32 @@ void takeFromQueue(int qn) {
   }
   if (queues[qn].isEmpty()) {
     errorAndClear();
+    return;
   }
   ledFeedback.blink(qn);
   addQueueToMaster(qn);
+}
+
+/**
+ * Smaze posledni prvek zadane fronty; je-li
+ * full true, smaze celou frontu
+ */
+void clearQueueItem(int queueNo, boolean full) {
+  if (queueNo <= 0 || queueNo >= MAX_QUEUE_COUNT) {
+    errorAndClear();
+    return;
+  }
+  Queue& q = queues[queueNo];
+  if (full) {
+    q.clear();
+  } else {
+    if (!q.discardLast()) {
+      _DPRINTLN("Could not remove last item");
+      errorAndClear();
+    } else {
+      ledFeedback.signal(&numberAck[0]);
+    }
+  }
 }
 
 
@@ -519,16 +579,27 @@ void processTrackSelect(char c) {
       _DPRINTLN2("Entering queue select: ", inputNumber);
       ledFeedback.signal(&numberAck[0]);
       return;
-    case 'A':   
+    case 'A':   // vytvorit frontu
      _DPRINTLN2("Entering sequenced queue select", inputNumber);
       speakerState = sequenceQueueSelect;
       trackSelection = inputNumber;
       ledFeedback.signal(&numberAck[0]);
       return;
-    case 'b':
+    case 'b':   // prehrat z fronty X
       _DPRINTLN2("Play selected queue ", inputNumber);
       takeFromQueue(inputNumber);
       restart();
+      break;
+
+    case 'c':   // vymazat posledni ze zadane fronty
+      //_DPRINTLN2("Clear last from ", (int)inputNumber);
+//      Serial.print("Clear last ");
+//      Serial.println((int)inputNumber);
+      clearQueueItem(inputNumber, false);
+      break;
+    case 'C':   // vymazat celou zadanou frontu
+      _DPRINTLN2("Clear all queue ", (int)inputNumber);
+      clearQueueItem(inputNumber, true);
       break;
   }
   if (c >= '0' && c <= '9') {
@@ -751,8 +822,10 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Station speaker v1.0");
 
-  pinMode(10, INPUT);
-  pinMode(11, OUTPUT);
+//  pinMode(10, INPUT);
+//  pinMode(11, OUTPUT);
+  pinMode(A1, OUTPUT);
+  pinMode(A2, INPUT);
   pinMode(12, INPUT_PULLUP);
 
   // indikacni LED - vystup

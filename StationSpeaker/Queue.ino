@@ -3,7 +3,11 @@
 Queue::Queue() : count(0), head(0), autoIncrement(0), playAt(0)  {}
 
 boolean Queue::isEmpty() {
-  return !isAutoMode() && (head == count) && (head == 0);
+  return !isAutoMode() && (head == count);
+}
+
+boolean Queue::isClear() {
+  return !isAutoMode() && count == 0;
 }
 
 boolean Queue::isAutoMode() {
@@ -50,6 +54,7 @@ int Queue::poll() {
     return tracks[head++];
   }
   if (isAutoMode()) {
+    head = count = 0; // aby pristi retract vratil zpet autoincrement a discardLast dekrementoval citac.
     return autoIncrement++;
   }
   return 0;
@@ -66,10 +71,14 @@ void Queue::retract() {
   head--;
 }
 
-void Queue::finished() {  
-  if (!isAutoMode() && (head < count)) {
-    head++;
+boolean Queue::discardLast() {
+  if (count > 0 && count > head) {
+    count--;
+  } else if (autoIncrement > 0) {
+    autoIncrement--;
+  } else {
+    return false;
   }
+  return true;
 }
-
 

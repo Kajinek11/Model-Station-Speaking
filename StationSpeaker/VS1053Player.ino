@@ -1,6 +1,11 @@
 #include "Config.h"
 #include "VS1053Config.h"
 
+/**
+ * Pokusi se na SD karte najit soubor, ktery zacina danym cislem,
+ * doplnenym zepredu nulami na MAX_TRACK_DIGITS. Zbytek jmena je zcela
+ * libovolny s slouzi jako popisek - kdyby prehravac nekdy dostal display.
+ */
 File vsFindTrackNumber(int n) {
   File dir = SD.open("/");
   File entry;
@@ -16,9 +21,9 @@ File vsFindTrackNumber(int n) {
     }
     entry.close();
   }
+  // vracim prazdny soubor.
   return File();
 }
-
 
 void vsPlaySelectedSound(int track) {
 }
