@@ -37,3 +37,24 @@ Mozna dalsi rozsireni:
 * ulozeni sekvence (cisel skladeb) do FLASH, prehrani jednim tlacitkem
 * Spousteni zvuku digitalnim vstupem
 
+# Konfigurace
+Konfigurace je mozna ruznymi nastavenimi v souboru `Config.h`. Pomoci `#define` a `#undef` se zvoli vystupni zarizeni - smi byt definovane jen jedine. `#define VS1053_FAKE` slouzi pro ladeni, nebot VS1053 nemam :) jen jsem se s kolegou Kajinkem dohodl ze napisu zaklad.
+
+Dale je zde konfigurace maticove klavesnice - predpoklada se 4x4 (viz `KEYPAD_ROWS`, `KEYPAD_COLS`). Jednotlive piny se pak definuji v `keyRowPins`, `keyColPins`. Pozor - zatimco "radkove" (row) piny jsou vstupni, "column" piny jsou **vystupni**. V pripade nutnosti jde upravit knihovnu Keypad tak, aby jako radkove piny mohly slouzit **A6** a **A7** (ktere jsou urcene jen pro analogovy vstup)
+
+`LED_FEEDBACK` urcuje pin ovladajici LED, ktera blikanim signalizuje co se deje (viz ovladani). LED se vypina nastavenim pinu na **-1**.
+* Kratky blik - prijaty stisk tlacitka nebo prikaz
+* Dlouhy blik - prijeti skladby k prehrani
+* 2x dlouy blik - storno
+* 3x rychly blik - chyba, prechod do zakladniho stavu
+
+Pokud je zapnuto `#define DEBUG`, pise se do seriove konzole hrozna spousta ladicich hlasek.
+
+Zbyla nastaveni jsou popsana v textu a nejsou az tak podstatna
+
+# Konfigurace pro DFPlayer
+Konfigurace pinu je v `DFPlayer.ino`. Komunikuje se pomoci serioveho rozhrani, zapojeni viz popis DFPlayeru. **POZOR** - `TX` DFPlayeru musi prijit na pin uvedeny jako `DFPLAYER_RX`, `RX` DFPlayeru pak na pin `DFPLAYER_TX`. Pouziva se softwarova emulace serioveho rozhrani, **neni nutne** volit piny s HW podporou UARTu.
+
+# Konfigurace pro VS1053
+TBD - Kajinek11 dopise.
+
