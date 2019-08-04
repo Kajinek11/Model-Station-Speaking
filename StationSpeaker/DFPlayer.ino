@@ -72,7 +72,7 @@ void dfPlaySound(int trackNo) {
   }
   _DPRINT2("DFPlayer: play folder: ", folderN);
   _DPRINTLN2(", track: ", trackN);
-  mp3.playFolderTrack16(folderN, trackN);
+  mp3.playFolderTrack(folderN, trackN);
   lastFinished = -1;
 }
 
