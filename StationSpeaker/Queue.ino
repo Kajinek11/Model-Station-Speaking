@@ -81,4 +81,3 @@ boolean Queue::discardLast() {
   }
   return true;
 }
-

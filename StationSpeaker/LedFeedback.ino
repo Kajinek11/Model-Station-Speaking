@@ -46,4 +46,3 @@ void LedFeedback::run() {
   nextSignal  = m + n;
   digitalWrite(ledNumber, state ? HIGH : LOW);
 }
-

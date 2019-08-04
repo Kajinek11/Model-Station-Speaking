@@ -2,6 +2,15 @@
 #include <SoftwareSerial.h>
 #include "Config.h"
 
+/**
+ * Signal, kterym DFPlayer rika zda prehrava ci ne.
+ */
+const int DFPLAYER_BUSY = A0;
+
+const int DFPLAYER_RX = A2;
+const int DFPLAYER_TX = A1;
+
+
 int lastFinished = -1;
 
 class Mp3Notify
@@ -36,9 +45,7 @@ public:
 /**
  * Seriove rozhrani pro ovladani DF Playeru
  */
-// SoftwareSerial dfpSerial(10, 11);
-
-SoftwareSerial dfpSerial(A2, A1);
+SoftwareSerial dfpSerial(DFPLAYER_RX, DFPLAYER_TX);
 
 DFMiniMp3<SoftwareSerial, Mp3Notify> mp3(dfpSerial);
 
@@ -65,7 +72,7 @@ void dfPlaySound(int trackNo) {
   }
   _DPRINT2("DFPlayer: play folder: ", folderN);
   _DPRINTLN2(", track: ", trackN);
-  mp3.playFolderTrack(folderN, trackN);
+  mp3.playFolderTrack16(folderN, trackN);
   lastFinished = -1;
 }
 
@@ -84,5 +91,3 @@ void dfSetup() {
   dfpSerial.begin (9600);
   mp3.setVolume(config.volume);
 }
-
-

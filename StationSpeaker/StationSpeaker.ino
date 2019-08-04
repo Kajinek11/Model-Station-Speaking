@@ -1,4 +1,3 @@
-#include <Adafruit_VS1053.h>
 #include <Key.h>
 #include <Keypad.h>
 #include <HardwareSerial.h>
@@ -10,39 +9,7 @@
 #include "LedFeedback.h"
 #include "Queue.h"
 
-/**
- * Maximalni cislo, ktere jde zadat. Pokud se zada vice cifer, 
- * vyhlasi se chyba a zadava se opet od zacatku. 999 = trimistna cisla, pri 
- * zadani 4. mista dojde k chybe.
- */
-const int MAX_TRACK_DIGITS = 3;
-
-/**
- * Minimalni pocet cislic
- */
-const int MIN_TRACK_DIGITS = 2;
-
-/**
- * Nejmensi pocet cislic k oznaceni jedine skladby. Pri zacdani mensiho poctu cislic
- * se bude vstup povazovat za sekvenci a doplni se "0".
- */
-const int MIN_TRACK_DIGITS_SINGLE = 3;
-
-/**
- * Timeout pro zadavani cisel, v milisekundach. Nasledujici cislice se musi stisknout do
- * behem nastaveneho casu, jinak se vstup vymaze.
- */
-const int DIGIT_TIMEOUT = 1000;
-
-/**
- * Prodleva mezi jednotlivymi prehravanymi zvuky
- */
-const long MASTER_QUEUE_PROCESS_DELAY = 3000;
-
-/**
- * Ochranna lhuta pri pokynu "dalsi z fronty", kdy lze skladbu preskocit
- */
-const long NEXT_FROM_QUEUE_DELAY = 2000;
+const int maxTrackDigits = MAX_TRACK_DIGITS;
 
 const char STAR = '*';    // Potvrdi zadani cisla, prehraje zvuj AZ soucasny skonci
 const char HASH = '#';    // Potvrdi zadani cisla, prehraje zvuk
@@ -217,7 +184,7 @@ void inputDigit(int d) {
     inputNumber = 0;
   }
   inputNumber = (inputNumber * 10) + d;
-  if (digits > MAX_TRACK_DIGITS) {
+  if (digits > maxTrackDigits) {
     _DPRINTLN("Too many digits.");
     errorAndClear();
     return;
@@ -235,7 +202,7 @@ void stopCurrentSound() {
   _DPRINTLN("Stopping sound");
   ledFeedback.signal(&cancelAck[0]);
   playing = false;
-  if (!master.isEmpty()) {
+  if (!masterQueue.isEmpty()) {
     scheduleMaster(millis() + MASTER_QUEUE_PROCESS_DELAY);
     _DPRINTLN2("Master not empty, suspended until ", masterQueuePlayTime);
     
@@ -252,6 +219,11 @@ void playSelectedSound(boolean stopCurrent) {
   if (trackNo <= 0) {
     ledFeedback.signal(&invalidSelection[0]);
     _DPRINTLN2("Invalid track: ", trackNo);
+    return;
+  }
+  if (_checkTrackMissing(trackNo)) {
+    ledFeedback.signal(&invalidSelection[0]);
+    _DPRINTLN2("Missing track: ", trackNo);
     return;
   }
   _DPRINTLN2("Queuing track: ", trackNo);
@@ -445,6 +417,7 @@ void insertInNewQueue() {
  * se na pokyny z klavesnice
  */
 void stopAndclearMasterQueue() {
+  _DPRINTLN("Stop + clear queue");
   _stopSound();
   masterQueue.clear();
   masterQueuePlayTime = -1;
@@ -592,9 +565,7 @@ void processTrackSelect(char c) {
       break;
 
     case 'c':   // vymazat posledni ze zadane fronty
-      //_DPRINTLN2("Clear last from ", (int)inputNumber);
-//      Serial.print("Clear last ");
-//      Serial.println((int)inputNumber);
+      _DPRINTLN2("Clear last from ", (int)inputNumber);
       clearQueueItem(inputNumber, false);
       break;
     case 'C':   // vymazat celou zadanou frontu
@@ -762,6 +733,7 @@ void processMasterQueue() {
     return;
   }
   // nic neprehravame.
+  _DPRINTLN("Queue empty");
   playing = false;
 }
 
@@ -769,8 +741,11 @@ void processMasterQueue() {
  * Vola se kdyz prehravac skoncil prehravani.
  */
 void playerFinishedCallback() {
-  _DPRINTLN2("Finished playing queue ", playingFromQueue);
+  if (!playing) {
+    return;
+  }
   if (playingFromQueue > 0) {
+    _DPRINTLN2("Finished playing queue ", playingFromQueue);
     Queue& q = queues[playingFromQueue];
     if (q.isEmpty()) {
       // to ze je prazdna vubec neznamena, ze je cista :)
@@ -784,6 +759,7 @@ void playerFinishedCallback() {
   } else {
     masterQueue.clear();
   }
+  _DPRINTLN("Finished.");
   playing = false;
 }
 
@@ -822,12 +798,6 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Station speaker v1.0");
 
-//  pinMode(10, INPUT);
-//  pinMode(11, OUTPUT);
-  pinMode(A1, OUTPUT);
-  pinMode(A2, INPUT);
-  pinMode(12, INPUT_PULLUP);
-
   // indikacni LED - vystup
   pinMode(LED_FEEDBACK, OUTPUT);
   keypad.setHoldTime(LONG_KEYPRESS_MIN);
@@ -847,5 +817,3 @@ void loop() {
   _loop();
   processMasterQueue();
 }
-
-

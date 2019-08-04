@@ -32,6 +32,9 @@ void _playerLoop();
  */
 boolean _checkTrackMissing(int trackId);
 
+//////////////////////////////////////////////////////////////////////
+// Callbacky z prehravace do 'planovace'
+
 /**
  * Prehravac musi zavolat tuto funkci pote,
  * co skonci prehravani skladby.
@@ -46,4 +49,3 @@ void playerMissingTrackCallback();
 
 
 #endif
-
