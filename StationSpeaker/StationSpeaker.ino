@@ -9,6 +9,8 @@
 #include "LedFeedback.h"
 #include "Queue.h"
 
+const int LONG_NUMBER = 'K' - '0';
+
 const int maxTrackDigits = MAX_TRACK_DIGITS;
 
 const char STAR = '*';    // Potvrdi zadani cisla, prehraje zvuj AZ soucasny skonci
@@ -340,6 +342,10 @@ void addQueueToMaster(int currentQueue) {
 }
 
 void insertInActiveQueue() {
+  insertInActiveQueue(true);
+}
+
+void insertInActiveQueue(boolean startPlaying) {
   _DPRINTLN2("Queuing track ", trackSelection);
   if (currentQueue == -1) {
     _DPRINTLN("No queue");
@@ -374,7 +380,7 @@ void insertInActiveQueue() {
   }
   // Neprehravalo se z ni; pokud s z ni prave prehrava, jeste
   // nema status 'clear'
-  if (wasClear) {
+  if (startPlaying && wasClear) {
     _DPRINTLN("Play empty queue");
     addQueueToMaster(currentQueue);
   }
@@ -591,16 +597,22 @@ void processQueueSelect(char c) {
     errorAndClear();
     return;
   }
+  boolean playImmediately = false;
   switch (c) {
     case LONG_STAR:
-      insertInNewQueue();
+      insertInActiveQueue(true);
       return;
     case STAR:
-      insertInActiveQueue();
+      insertInActiveQueue(false);
       return;
   }
   if (c < '1' || c > '9') {
-    return;
+    if (c >= '1' + LONG_NUMBER && c < '1' + LONG_NUMBER + 10) {
+      c = c - LONG_NUMBER;
+      playImmediately = true;
+    } else {
+      return;
+    }
   }
   int qn = c - '0';
   if (qn >= MAX_QUEUE_COUNT) {
@@ -608,7 +620,7 @@ void processQueueSelect(char c) {
     return;
   }
   currentQueue = qn;
-  insertInActiveQueue();
+  insertInActiveQueue(playImmediately);
 }
 
 /**
@@ -639,7 +651,7 @@ void keypadHandler(KeypadEvent key) {
       kchar = key;
       if (isDigit(kchar)) {
         // "velka cisla" ;)
-        kchar = 'K' + (kchar - '0');
+        kchar = LONG_NUMBER + kchar;
       } else if (kchar >= 'a' && kchar <= 'd') {
         kchar = 'A' + (kchar - 'a');
       } else {
