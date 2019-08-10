@@ -195,6 +195,8 @@ Sady zvuků jsou zamýšlené k přehrávání posloupnosti staničních hláše
 | 02/212.mp3|                 | Přijel, končí         |
 | 02/213.mp3|                 | Stanice Kladno, končí |
 
+*Poznámka: ano, vím, že trať Praha - Kralupy a Kladno - Dubí je stejná, a tudíž asi těžko přijedou 2 vlaky po sobě ... ale došly mi nápady. Vymyslete a naformátujte lepší příklad.* 
+
 Předpokládejme, že soupravy se začnou sjíždět v pořadí "Praha - Kralupy", "Dubí - Kladno", "Praha - Rakovník". Provedeme:
 
 * 201 ^ A ^ 1
