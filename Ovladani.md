@@ -181,7 +181,7 @@ tak se:
 Sady zvuků jsou zamýšlené k přehrávání posloupnosti staničních hlášení tak, jak postupně následují při přijetí, odbavení a vypravení vlaku.
 
 | Soubor    | Spoj            | Obsah                 |
-| ---       |  ---            | ---                 - |
+|-----------|-----------------|-----------------------|
 | 01/101.mp | Rakovník - Praha| Přijede na kolej 4    |
 | 01/102.mp3|                 | Přijíždí na kolej 4   |
 | 01/103.mp3|                 | Stanice Kladno        |
